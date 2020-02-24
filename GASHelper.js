@@ -624,7 +624,7 @@
         var ss = ssId ? SpreadsheetApp.openById(ssId) : SpreadsheetApp.getActiveSpreadsheet()
         var sheet = ss.getSheetByName(sheetName)
         var paramFilesToConvert = {
-            title: sheet.getName(),
+            nameFile: sheet.getName(),
             folderId: false,
             format: "pdf", // export as pdf / csv / xls / xlsx
             size: "A4", // paper size legal / letter / A4
@@ -660,13 +660,84 @@
         }
         var blob = getExportBlob(ss.getId(), sheet.getSheetId(), paramFilesToConvert)
         var pdf = DriveApp.createFile(blob);
-        pdf.setName(paramFilesToConvert.title);
+        pdf.setName(paramFilesToConvert.nameFile);
       if(paramFilesToConvert.folderId){
         DriveApp.getFolderById(paramFilesToConvert.folderId).addFile(pdf);
       }
         return pdf;
     }
-   
+    function sendMail(textObj, subjObj, emailRecColHeader, emailObj) {
+        Logger.log(arguments.length)
+          if (arguments.length < 4) {
+              throw Error("Not enough arguments")
+          }
+          if (arguments.length > 4) {
+              throw Error("Too many arguments")
+          }  
+          
+          if (typeof textObj === "string") {
+              textObj = {end: textObj}
+          }
+          if (typeof subjObj === "string") {
+              subjObj = {end: subjObj}
+          }
+          if (textObj.hasOwnProperty("header")) {
+              if (!Array.isArray(textObj.header)) {
+                  throw Error("Header must be an Array")
+              }
+              textObj.header.forEach(function(item) {
+                  if (!textObj.hasOwnProperty(item)) {
+                      throw Error("Object doesn't have property: "+item);
+                  }
+              })
+          }
+          if (subjObj.hasOwnProperty("header")) {
+              if (!Array.isArray(subjObj.header)) {
+                  throw Error("Header must be an Array")
+              }
+              subjObj.header.forEach(function(item) {
+                  if (!subjObj.hasOwnProperty(item)) {
+                      throw Error("Object doesn't have property: "+item);
+                  }
+              })
+          }
+          emailObj = emailObj || {};
+          if (typeof emailObj != "object") {
+              throw Error("Email Options need to be an object, see GAS documentation")
+          }
+          
+          var patt = /^[A-Z0-9._%+-]{1,64}@(?:[A-Z0-9-]{1,63}\.){1,125}[A-Z]{2,63}$/i;
+          var recipient; 
+          var i; 
+          var text = "";
+          var subject = "";
+          var stop = false;
+          if (stop) return false;
+          if (textObj.hasOwnProperty("header")) {
+              var textDataHeader = textObj.header;
+              for (i = 0; i < textDataHeader.length; i++) {
+                  text += textObj[textDataHeader[i]];
+              }
+          }
+          if (textObj.hasOwnProperty("end")) {
+              text += textObj.end;
+          }
+          if (subjObj.hasOwnProperty("header")) {
+              var subjDataHeader = subjObj.header;
+              for (i = 0; i < subjDataHeader.length; i++) {
+                  subject += subjObj[subjDataHeader[i]];
+              }
+          }
+          if (subjObj.hasOwnProperty("end")) {
+              subject += subjObj.end;
+          }
+          if (patt.test(emailRecColHeader)) {
+              recipient = emailRecColHeader
+          } else {
+              throw Error("This string is not address email")
+          }
+          GmailApp.sendEmail(recipient, subject, text, emailObj);
+      }
     GASHelper.archive = archive
     GASHelper.compare = listCompare
     GASHelper.importCsv = importCsv
@@ -675,6 +746,7 @@
     GASHelper.moveValues = moveValues
     GASHelper.permission = permission
     GASHelper.convertSheet = convertSheet
+    GASHelper.sendMail = sendMail
 
     return GASHelper
 
