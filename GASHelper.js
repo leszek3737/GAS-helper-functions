@@ -611,6 +611,62 @@
         }
     }
     
+    function convertSheet(sheetName, paramFile, ssId ) {
+        if (typeof paramFile != "object" && paramFile) {
+            throw Error("paramFile not is Object");
+        }
+        if (arguments.length < 1) {
+            throw Error("Not enough arguments")
+        }
+        if (arguments.length > 3) {
+            throw Error("Too many arguments")
+        }
+        var ss = ssId ? SpreadsheetApp.openById(ssId) : SpreadsheetApp.getActiveSpreadsheet()
+        var sheet = ss.getSheetByName(sheetName)
+        var paramFilesToConvert = {
+            title: sheet.getName(),
+            folderId: false,
+            format: "pdf", // export as pdf / csv / xls / xlsx
+            size: "A4", // paper size legal / letter / A4
+            portrait: true, // orientation, false for landscape
+            fitw: true, // fit to page width, false for actual size
+            sheetnames: false, //hide optional headers
+            printtitle: false, //hide optional footers
+            pagenumbers: false, // hide page numbers
+            gridlines: false, // hide page gridlines
+            fzr: false, // do not repeat row headers (frozen rows) on each page
+        }
+        if (paramFile) {
+            paramFilesToConvert = _.merge(paramFilesToConvert, paramFile)
+        }
+        function getExportBlob(spreadSheetId, sheetId, paramFile) {
+            var url = 'https://docs.google.com/spreadsheets/d/' + spreadSheetId +
+                '/export?exportFormat=pdf&format=' + paramFile.format +
+                '&size=' + paramFile.size +
+                '&portrait=' + paramFile.portrait +
+                '&fitw=' + paramFile.fitw +
+                '&sheetnames=' + paramFile.sheetnames +
+                '&printtitle=' + paramFile.printtitle +
+                '&pagenumbers=' + paramFile.pagenumbers +
+                '&gridlines=' + paramFile.gridlines +
+                '&fzr=' + paramFile.fzr +
+                '&gid=' + sheetId // ;        // the sheet's Id
+                  var response = UrlFetchApp.fetch(url, {
+                headers: {
+                    'Authorization': 'Bearer ' + ScriptApp.getOAuthToken()
+                }
+            });
+            return response.getBlob();
+        }
+        var blob = getExportBlob(ss.getId(), sheet.getSheetId(), paramFilesToConvert)
+        var pdf = DriveApp.createFile(blob);
+        pdf.setName(paramFilesToConvert.title);
+      if(paramFilesToConvert.folderId){
+        DriveApp.getFolderById(paramFilesToConvert.folderId).addFile(pdf);
+      }
+        return pdf;
+    }
+   
     GASHelper.archive = archive
     GASHelper.compare = listCompare
     GASHelper.importCsv = importCsv
@@ -618,6 +674,7 @@
     GASHelper.sendMailOnEdit = sendMailOnEdit
     GASHelper.moveValues = moveValues
     GASHelper.permission = permission
+    GASHelper.convertSheet = convertSheet
 
     return GASHelper
 
