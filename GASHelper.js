@@ -522,7 +522,7 @@
         }
         var orKey, andKey;
         var newData = [];
-        sourceData.forEach(function (row) {
+        sourceData.forEach(function (row, sourceHeader) {
             var addRowBool = false
             if (typeof conObj == "function") {
                 addRowBool = conObj(row)
