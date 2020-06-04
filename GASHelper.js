@@ -770,7 +770,7 @@
         if (arguments.length < 5) {
             throw Error("Not enough arguments")
         }
-        if (arguments.length > 5) {
+        if (arguments.length > 7) {
             throw Error("Too many arguments")
         }
         if (!paramFile) {
